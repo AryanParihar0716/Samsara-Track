@@ -1,206 +1,183 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Samsara Fest Master Guide</title>
+    <title>Samsara Fest Pro Navigator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        :root { --neon: #39FF14; --dark: #0a0a0a; --card: #161616; }
         body { 
-            font-family: 'Segoe UI', sans-serif; 
-            text-align: center; 
-            background: #0a0a0a; 
-            color: white; 
-            margin: 0; 
-            padding: 20px; 
+            font-family: 'Segoe UI', sans-serif; text-align: center; 
+            background: var(--dark); color: white; margin: 0; padding: 20px; 
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Camera & Compass UI */
-        #compass-container {
-            width: 280px; height: 280px;
-            margin: 20px auto;
-            position: relative;
+        /* HUD - Internal Arrow */
+        #lens-container { 
+            width: 280px; height: 280px; 
+            margin: 20px auto; position: relative; 
             display: flex; align-items: center; justify-content: center;
         }
-        #camera-feed {
-            width: 240px; height: 240px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #39FF14;
-            box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
-            background: #111;
+        #camera-feed { 
+            width: 240px; height: 240px; border-radius: 50%; 
+            object-fit: cover; border: 4px solid var(--neon); 
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); background: #111; 
         }
-        #compass-ring {
-            width: 100%; height: 100%;
-            position: absolute;
-            top: 0; left: 0;
-            pointer-events: none;
-            transition: transform 0.1s ease-out;
-        }
-        #arrow {
-            width: 0; height: 0;
-            border-left: 18px solid transparent;
-            border-right: 18px solid transparent;
-            border-bottom: 45px solid #39FF14;
-            position: absolute;
-            top: -10px; left: 50%;
-            transform: translateX(-50%);
-            filter: drop-shadow(0 0 5px rgba(0,0,0,0.8));
-        }
-
-        /* Status & Buttons */
-        #status-card { background: #161616; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; margin-bottom: 20px; }
-        #dist-val { font-size: 2.5rem; color: #39FF14; font-weight: bold; }
-        .landmark-btn { background: #1a1a1a; color: #ccc; border: 1px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; text-align: left; width: 100%; max-width: 400px; }
-        .landmark-btn.active { background: #39FF14; color: #000; font-weight: bold; border-color: #39FF14; }
-
-        /* Overlays */
-        #setup-screen, #failsafe-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0a0a0a; z-index: 1000; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
-        }
-        #failsafe-overlay { display: none; background: rgba(0,0,0,0.95); }
-        .warning-box { border: 2px solid #ff4444; padding: 25px; border-radius: 20px; background: #1a0000; width: 100%; max-width: 400px; }
         
-        .primary-btn { background: #39FF14; padding: 20px 50px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.2rem; cursor: pointer; color: #000; }
-        .secondary-btn { background: #444; margin-top: 15px; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; }
+        #internal-arrow {
+            position: absolute; top: 50%; left: 50%;
+            width: 0; height: 0;
+            border-left: 15px solid transparent; border-right: 15px solid transparent;
+            border-bottom: 40px solid var(--neon);
+            /* This centers the base of the arrow exactly in the middle of the circle */
+            margin-top: -40px; margin-left: -15px; 
+            transform-origin: 50% 100%; 
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.8));
+            z-index: 10;
+        }
+
+        /* Legend & UI */
+        #smart-msg { 
+            background: rgba(57, 255, 20, 0.1); border: 1px solid var(--neon); 
+            padding: 12px; border-radius: 10px; font-size: 0.85rem; 
+            margin-bottom: 15px; width: 100%; max-width: 400px; color: var(--neon); 
+        }
+        #legend-box { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 15px; box-sizing: border-box; text-align: left; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; background: #222; border: none; color: #888; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: var(--neon); color: black; }
+        
+        .legend-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #333; cursor: pointer; }
+        .legend-tag { color: var(--neon); font-size: 0.75rem; text-transform: uppercase; }
+
+        #setup-screen, #failsafe-overlay {
+            position: fixed; inset: 0; background: var(--dark); z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+        }
+        .primary-btn { background: var(--neon); padding: 18px 45px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen">
-        <img src = './Samsara logo.png'>
-        <h1 style="color: #39FF14;">Samsara Fest</h1>
-        <p style="color: #888;">Live Camera & Compass Navigator</p>
-        <button class="primary-btn" id="init-btn">🚀 Start Guide</button>
+        <img src="./Samsara logo.png" style="max-width: 150px; margin-bottom: 20px;" onerror="this.style.display='none'">
+        <h1 style="color: var(--neon);">SAMSARA FEST</h1>
+        <button class="primary-btn" id="init-btn">🚀 Start Navigator</button>
     </div>
 
-    <div id="main-ui" style="display: none; width: 100%; max-width: 500px;">
-        <div id="compass-container">
+    <div id="main-ui" style="display: none; width: 100%; max-width: 450px;">
+        <div id="lens-container">
             <video id="camera-feed" autoplay playsinline></video>
-            <div id="compass-ring"><div id="arrow"></div></div>
+            <div id="internal-arrow"></div>
         </div>
         
-        <div id="status-card">
-            <div id="target-label" style="color: #888; text-transform: uppercase;">Heading to...</div>
-            <div id="dist-val">---m</div>
-        </div>
+        <div id="smart-msg">Select a destination below to begin.</div>
 
-        <div id="btn-container"></div>
+        <div id="legend-box">
+            <div class="tabs">
+                <button class="tab-btn active" id="tab-stalls">STALLS</button>
+                <button class="tab-btn" id="tab-events">EVENTS</button>
+            </div>
+            <div id="legend-content"></div>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <div id="dist-val" style="font-size: 2rem; color: var(--neon); font-weight: bold;">---m</div>
+            <div id="target-label" style="color: #888; font-size: 0.8rem; text-transform: uppercase;">Heading to...</div>
+        </div>
     </div>
 
-    <div id="failsafe-overlay">
-        <div class="warning-box">
-            <h2 style="color: #ff4444;">Access Required</h2>
-            <p id="error-msg">Please enable Camera and Location in your browser settings to continue.</p>
-            <button class="primary-btn" style="font-size: 1rem; padding: 10px 30px;" onclick="location.reload()">🔄 Try Again</button>
-            <p style="margin-top: 20px; font-size: 0.8rem;">Or use our backup:</p>
-            <button class="secondary-btn" id="maps-backup">Open Google Maps</button>
+    <div id="failsafe-overlay" style="display: none;">
+        <div style="border: 2px solid #ff4444; padding: 25px; border-radius: 20px; background: #1a0000; text-align: center;">
+            <h2 style="color: #ff4444;">Access Denied</h2>
+            <p id="error-msg">Please enable Camera and Location access.</p>
+            <button class="primary-btn" onclick="location.reload()">🔄 Try Again</button>
         </div>
     </div>
 
     <script>
-        const LANDMARKS = [
-            { id: 'gaming', name: "Tech Fair", lat: 18.48955730825945,  lon: 73.85256513805896 },
-            { id: 'stage', name: "Main Stage", lat: 18.490058037364886, lon:  73.85243708640193, },
-            { id: 'food', name: "Fun Fair", lat: 18.489501500502676,  lon: 73.85276453606353 }
-        ];
+        const DATA = {
+            stalls: [
+                { name: "Tech Fair", lat: 18.489557, lon: 73.852565, info: "Innovation Hub" },
+                { name: "Fun Fair", lat: 18.489501, lon: 73.852764, info: "Games & Food" }
+            ],
+            events: [
+                { name: "Main Stage", lat: 18.490058, lon: 73.852437, info: "Events @ 4PM" }
+            ]
+        };
 
-        let currentTarget = LANDMARKS[0];
+        let currentTarget = DATA.stalls[0];
         let userPos = null;
         let heading = 0;
 
-        // --- MATH HELPERS ---
-        function getDist(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
-
-        function getBearing(lat1, lon1, lat2, lon2) {
-            const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
-            const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
-            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-        }
-
         function refresh() {
             if (!userPos) return;
-            const d = getDist(userPos.lat, userPos.lon, currentTarget.lat, currentTarget.lon);
-            const b = getBearing(userPos.lat, userPos.lon, currentTarget.lat, currentTarget.lon);
+            const lat1 = userPos.lat, lon1 = userPos.lon, lat2 = currentTarget.lat, lon2 = currentTarget.lon;
+            
+            // Distance Calculation
+            const R = 6371000;
+            const dLat = (lat2-lat1)*Math.PI/180;
+            const dLon = (lon2-lon1)*Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+            const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            // Bearing Calculation
+            const y = Math.sin((lon2-lon1)*Math.PI/180)*Math.cos(lat2*Math.PI/180);
+            const x = Math.cos(lat1*Math.PI/180)*Math.sin(lat2*Math.PI/180) - Math.sin(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.cos((lon2-lon1)*Math.PI/180);
+            const b = (Math.atan2(y, x)*180/Math.PI + 360) % 360;
+
             document.getElementById('dist-val').innerText = `${Math.round(d)}m`;
             document.getElementById('target-label').innerText = `Heading to: ${currentTarget.name}`;
-            document.getElementById('compass-ring').style.transform = `rotate(${b - heading}deg)`;
+            document.getElementById('internal-arrow').style.transform = `rotate(${b - heading}deg)`;
         }
 
-        // --- DYNAMIC BUTTONS ---
-        const container = document.getElementById('btn-container');
-        LANDMARKS.forEach((loc, index) => {
-            const btn = document.createElement('div');
-            btn.className = `landmark-btn ${index === 0 ? 'active' : ''}`;
-            btn.innerText = loc.name;
-            btn.onclick = () => {
-                document.querySelectorAll('.landmark-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentTarget = loc;
-                refresh();
-            };
-            container.appendChild(btn);
-        });
-
-        // --- FAILSAFE LOGIC ---
-        function triggerFailsafe(error) {
-            console.error(error);
-            document.getElementById('failsafe-overlay').style.display = 'flex';
-            const msg = document.getElementById('error-msg');
+        function switchTab(type) {
+            document.getElementById('tab-stalls').className = type === 'stalls' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-events').className = type === 'events' ? 'tab-btn active' : 'tab-btn';
             
-            if (error.code === 1) msg.innerText = "Location or Camera access was denied. Please check your browser's site permissions.";
-            else if (error.code === 3) msg.innerText = "GPS signal lost. Head outside for a better satellite lock.";
+            const content = document.getElementById('legend-content');
+            content.innerHTML = '';
             
-            document.getElementById('maps-backup').onclick = () => {
-                window.open(`https://www.google.com/maps/dir/?api=1&destination=${currentTarget.lat},${currentTarget.lon}&travelmode=walking`);
-            };
+            DATA[type].forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'legend-item';
+                div.innerHTML = `<div>${item.name}<br><span class="legend-tag">${item.info}</span></div><div style="color:var(--neon)">GO</div>`;
+                div.onclick = () => {
+                    currentTarget = item;
+                    document.getElementById('smart-msg').innerText = type === 'stalls' ? 
+                        "Since you're heading here, check out our legend to visit stalls you'll love!" : 
+                        "Since you're heading here, check out the list of events for today!";
+                    refresh();
+                };
+                content.appendChild(div);
+            });
         }
 
-        // --- INITIALIZATION ---
+        document.getElementById('tab-stalls').onclick = () => switchTab('stalls');
+        document.getElementById('tab-events').onclick = () => switchTab('events');
+
         document.getElementById('init-btn').onclick = async () => {
             try {
-                // 1. Start Camera
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" }, 
-                    audio: false 
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 document.getElementById('camera-feed').srcObject = stream;
 
-                // 2. Motion Access (iOS)
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    const status = await DeviceOrientationEvent.requestPermission();
-                    if (status !== 'granted') throw { code: 1 };
+                    await DeviceOrientationEvent.requestPermission();
                 }
 
-                // 3. Sensor Listeners
                 window.addEventListener('deviceorientationabsolute', (e) => {
                     heading = e.alpha || e.webkitCompassHeading || 0;
                     refresh();
                 }, true);
 
-                navigator.geolocation.watchPosition(
-                    (p) => { 
-                        userPos = { lat: p.coords.latitude, lon: p.coords.longitude }; 
-                        refresh(); 
-                    }, 
-                    triggerFailsafe, 
-                    { enableHighAccuracy: true, timeout: 15000 }
-                );
+                navigator.geolocation.watchPosition(p => { 
+                    userPos = { lat: p.coords.latitude, lon: p.coords.longitude }; 
+                    refresh(); 
+                }, (err) => { document.getElementById('failsafe-overlay').style.display = 'flex'; }, { enableHighAccuracy: true });
 
-                // 4. Show UI
                 document.getElementById('setup-screen').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'block';
-
-            } catch (err) {
-                triggerFailsafe({ code: 1, original: err });
-            }
+                switchTab('stalls');
+            } catch (err) { document.getElementById('failsafe-overlay').style.display = 'flex'; }
         };
     </script>
 </body>

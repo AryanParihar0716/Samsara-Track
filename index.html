@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Samsara Fest Pro Navigator</title>
+    <title>Samsara Fest 2026</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --neon: #39FF14; --dark: #0a0a0a; --card: #161616; }
         body { 
             font-family: 'Segoe UI', sans-serif; text-align: center; 
-            background: var(--dark); color: white; margin: 0; padding: 20px; 
+            background: var(--dark); color: white; margin: 0; padding: 15px; 
             display: flex; flex-direction: column; align-items: center;
         }
 
         /* HUD - Internal Arrow */
         #lens-container { 
             width: 280px; height: 280px; 
-            margin: 20px auto; position: relative; 
+            margin: 15px auto; position: relative; 
             display: flex; align-items: center; justify-content: center;
         }
         #camera-feed { 
@@ -28,40 +28,41 @@
             width: 0; height: 0;
             border-left: 15px solid transparent; border-right: 15px solid transparent;
             border-bottom: 40px solid var(--neon);
-            /* This centers the base of the arrow exactly in the middle of the circle */
             margin-top: -40px; margin-left: -15px; 
             transform-origin: 50% 100%; 
             filter: drop-shadow(0 0 5px rgba(0,0,0,0.8));
             z-index: 10;
         }
 
-        /* Legend & UI */
+        /* Messaging & Legend */
         #smart-msg { 
             background: rgba(57, 255, 20, 0.1); border: 1px solid var(--neon); 
-            padding: 12px; border-radius: 10px; font-size: 0.85rem; 
+            padding: 10px; border-radius: 10px; font-size: 0.85rem; 
             margin-bottom: 15px; width: 100%; max-width: 400px; color: var(--neon); 
         }
         #legend-box { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 15px; box-sizing: border-box; text-align: left; }
+        
         .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; padding: 10px; background: #222; border: none; color: #888; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .tab-btn { flex: 1; padding: 10px; background: #222; border: none; color: #888; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .tab-btn.active { background: var(--neon); color: black; }
         
-        .legend-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #333; cursor: pointer; }
-        .legend-tag { color: var(--neon); font-size: 0.75rem; text-transform: uppercase; }
+        #legend-content { max-height: 250px; overflow-y: auto; }
+        .legend-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #333; cursor: pointer; }
+        .legend-tag { color: var(--neon); font-size: 0.7rem; text-transform: uppercase; }
 
         #setup-screen, #failsafe-overlay {
             position: fixed; inset: 0; background: var(--dark); z-index: 1000;
             display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
         }
-        .primary-btn { background: var(--neon); padding: 18px 45px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+        .primary-btn { background: var(--neon); padding: 18px 40px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; color: black; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen">
-        <img src="./Samsara logo.png" style="max-width: 150px; margin-bottom: 20px;" onerror="this.style.display='none'">
-        <h1 style="color: var(--neon);">SAMSARA FEST</h1>
-        <button class="primary-btn" id="init-btn">🚀 Start Navigator</button>
+        <h1 style="color: var(--neon); margin: 0;">SAMSARA 2026</h1>
+        <p style="color: #888; margin-top: 10px;">Tech Fair & Fun Guide</p>
+        <button class="primary-btn" id="init-btn" style="margin-top: 30px;">🚀 START GUIDE</button>
     </div>
 
     <div id="main-ui" style="display: none; width: 100%; max-width: 450px;">
@@ -70,69 +71,97 @@
             <div id="internal-arrow"></div>
         </div>
         
-        <div id="smart-msg">Select a destination below to begin.</div>
+        <div id="smart-msg">Tap a stall in the Legend to start!</div>
 
         <div id="legend-box">
             <div class="tabs">
-                <button class="tab-btn active" id="tab-stalls">STALLS</button>
-                <button class="tab-btn" id="tab-events">EVENTS</button>
+                <button class="tab-btn active" id="tab-tech">TECH FAIR</button>
+                <button class="tab-btn" id="tab-fun">FUN FAIR</button>
             </div>
             <div id="legend-content"></div>
         </div>
         
         <div style="margin-top: 15px;">
             <div id="dist-val" style="font-size: 2rem; color: var(--neon); font-weight: bold;">---m</div>
-            <div id="target-label" style="color: #888; font-size: 0.8rem; text-transform: uppercase;">Heading to...</div>
+            <div id="target-label" style="color: #888; font-size: 0.75rem; text-transform: uppercase;">Awaiting Selection...</div>
         </div>
     </div>
 
     <div id="failsafe-overlay" style="display: none;">
         <div style="border: 2px solid #ff4444; padding: 25px; border-radius: 20px; background: #1a0000; text-align: center;">
-            <h2 style="color: #ff4444;">Access Denied</h2>
-            <p id="error-msg">Please enable Camera and Location access.</p>
+            <h2 style="color: #ff4444;">Sensor Error</h2>
+            <p>Please enable Location and Camera.</p>
             <button class="primary-btn" onclick="location.reload()">🔄 Try Again</button>
         </div>
     </div>
 
     <script>
         const DATA = {
-            stalls: [
-                { name: "Tech Fair", lat: 18.489557, lon: 73.852565, info: "Innovation Hub" },
-                { name: "Fun Fair", lat: 18.489501, lon: 73.852764, info: "Games & Food" }
+            tech: [
+                { id: "T1", name: "Astro club", type: "Tech Stall", lat: 18.48955, lon: 73.85256 },
+                { id: "T2", name: "ACM", type: "Tech Stall", lat: 18.48956, lon: 73.85257 },
+                { id: "T3", name: "TEDx", type: "Tech Stall", lat: 18.48957, lon: 73.85258 },
+                { id: "T4", name: "3D printing", type: "Tech Stall", lat: 18.48958, lon: 73.85259 },
+                { id: "T5", name: "Supra", type: "Tech Stall", lat: 18.48959, lon: 73.85260 },
+                { id: "T6", name: "Baja", type: "Tech Stall", lat: 18.48960, lon: 73.85261 },
+                { id: "T7", name: "Dous", type: "Tech Stall", lat: 18.48961, lon: 73.85262 },
+                { id: "T8", name: "EDC", type: "Tech Stall", lat: 18.48962, lon: 73.85263 },
+                { id: "T9", name: "NFP", type: "Tech Stall", lat: 18.48963, lon: 73.85264 },
+                { id: "C1", name: "Rotatory Club", type: "Company", lat: 18.48964, lon: 73.85265 },
+                { id: "C2", name: "Hiramiki", type: "Company", lat: 18.48965, lon: 73.85266 },
+                { id: "C3", name: "Bhasha", type: "Company", lat: 18.48966, lon: 73.85267 }
             ],
-            events: [
-                { name: "Main Stage", lat: 18.490058, lon: 73.852437, info: "" }
+            fun: [
+                { id: 1, name: "Game", type: "Fun Fair", lat: 18.48950, lon: 73.85276 },
+                { id: 2, name: "Dabeli", type: "Food", lat: 18.48951, lon: 73.85277 },
+                { id: 3, name: "Brownie & Cupcakes", type: "Food", lat: 18.48952, lon: 73.85278 },
+                { id: 4, name: "Cookies Stall", type: "Food", lat: 18.48953, lon: 73.85279 },
+                { id: 5, name: "South Fast Cuisine", type: "Food", lat: 18.48954, lon: 73.85280 },
+                { id: 6, name: "Pani Purri", type: "Food", lat: 18.48955, lon: 73.85281 },
+                { id: 7, name: "Bhel", type: "Food", lat: 18.48956, lon: 73.85282 },
+                { id: 8, name: "Sweet Corn", type: "Food", lat: 18.48957, lon: 73.85283 },
+                { id: 9, name: "Kurkure Bhel", type: "Food", lat: 18.48958, lon: 73.85284 },
+                { id: 10, name: "Watermelon Juice", type: "Food", lat: 18.48959, lon: 73.85285 },
+                { id: 11, name: "Mohito", type: "Food", lat: 18.48960, lon: 73.85286 },
+                { id: 12, name: "Thick Cold Coffee", type: "Food", lat: 18.48961, lon: 73.85287 },
+                { id: 13, name: "Scented Candles", type: "Misc", lat: 18.48962, lon: 73.85288 },
+                { id: 14, name: "Momos & Colddrinks", type: "Food", lat: 18.48963, lon: 73.85289 },
+                { id: 15, name: "Packet Food & Salad", type: "Food", lat: 18.48964, lon: 73.85290 },
+                { id: 16, name: "Dress materials", type: "Shopping", lat: 18.48965, lon: 73.85291 },
+                { id: 17, name: "Jewellary", type: "Shopping", lat: 18.48966, lon: 73.85292 },
+                { id: 18, name: "Gulmohar Stall", type: "Misc", lat: 18.48967, lon: 73.85293 },
+                { id: 19, name: "Paper Glass activity", type: "Game", lat: 18.48968, lon: 73.85294 },
+                { id: 20, name: "Glass hit game", type: "Game", lat: 18.48969, lon: 73.85295 },
+                { id: 21, name: "Ball in bucket", type: "Game", lat: 18.48970, lon: 73.85296 }
             ]
         };
 
-        let currentTarget = DATA.stalls[0];
+        let currentTarget = null;
         let userPos = null;
         let heading = 0;
 
         function refresh() {
-            if (!userPos) return;
+            if (!userPos || !currentTarget) return;
             const lat1 = userPos.lat, lon1 = userPos.lon, lat2 = currentTarget.lat, lon2 = currentTarget.lon;
             
-            // Distance Calculation
             const R = 6371000;
             const dLat = (lat2-lat1)*Math.PI/180;
             const dLon = (lon2-lon1)*Math.PI/180;
             const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
             const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-            // Bearing Calculation
             const y = Math.sin((lon2-lon1)*Math.PI/180)*Math.cos(lat2*Math.PI/180);
             const x = Math.cos(lat1*Math.PI/180)*Math.sin(lat2*Math.PI/180) - Math.sin(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.cos((lon2-lon1)*Math.PI/180);
             const b = (Math.atan2(y, x)*180/Math.PI + 360) % 360;
 
             document.getElementById('dist-val').innerText = `${Math.round(d)}m`;
-            document.getElementById('target-label').innerText = `Heading to: ${currentTarget.name}`;
+            document.getElementById('target-label').innerText = `Target: ${currentTarget.name}`;
             document.getElementById('internal-arrow').style.transform = `rotate(${b - heading}deg)`;
         }
 
         function switchTab(type) {
-            document.getElementById('tab-stalls').className = type === 'stalls' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('tab-events').className = type === 'events' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-tech').classList.toggle('active', type === 'tech');
+            document.getElementById('tab-fun').classList.toggle('active', type === 'fun');
             
             const content = document.getElementById('legend-content');
             content.innerHTML = '';
@@ -140,35 +169,32 @@
             DATA[type].forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'legend-item';
-                div.innerHTML = `<div>${item.name}<br><span class="legend-tag">${item.info}</span></div><div style="color:var(--neon)">GO</div>`;
-                div.onclick = () => {
-                    currentTarget = item;
-                    document.getElementById('smart-msg').innerText = type === 'stalls' ? 
-                        "Since you're heading here, check out our legend to visit stalls you'll love!" : 
+                div.innerHTML = `<div>${item.name}<br><span class="legend-tag">${item.type}</span></div><div style="color:var(--neon)">GO</div>`;
+                div.onclick = () => { 
+                    currentTarget = item; 
+                    document.getElementById('smart-msg').innerText = type === 'tech' ? 
+                        "Since you're heading here, check out our legend to visit stalls you'll love most!" : 
                         "Since you're heading here, check out the list of events for today!";
-                    refresh();
+                    refresh(); 
                 };
                 content.appendChild(div);
             });
         }
 
-        document.getElementById('tab-stalls').onclick = () => switchTab('stalls');
-        document.getElementById('tab-events').onclick = () => switchTab('events');
+        document.getElementById('tab-tech').onclick = () => switchTab('tech');
+        document.getElementById('tab-fun').onclick = () => switchTab('fun');
 
         document.getElementById('init-btn').onclick = async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 document.getElementById('camera-feed').srcObject = stream;
-
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     await DeviceOrientationEvent.requestPermission();
                 }
-
                 window.addEventListener('deviceorientationabsolute', (e) => {
                     heading = e.alpha || e.webkitCompassHeading || 0;
                     refresh();
                 }, true);
-
                 navigator.geolocation.watchPosition(p => { 
                     userPos = { lat: p.coords.latitude, lon: p.coords.longitude }; 
                     refresh(); 
@@ -176,7 +202,7 @@
 
                 document.getElementById('setup-screen').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'block';
-                switchTab('stalls');
+                switchTab('tech');
             } catch (err) { document.getElementById('failsafe-overlay').style.display = 'flex'; }
         };
     </script>
